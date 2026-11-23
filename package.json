@@ -1,0 +1,11 @@
+{
+  "name": "consulta-cnpj",
+  "version": "0.1.0",
+  "description": "Consulta de CNPJ em lote (planilha, CSV, TXT) com dados públicos de OpenCNPJ e CNPJá",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "exemplos": "node scripts/gera-exemplos.js"
+  },
+  "engines": { "node": ">=18" }
+}

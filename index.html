@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consulta CNPJ</title>
+<meta name="description" content="Consulta de CNPJ em lote: envie uma planilha, CSV ou TXT e receba porte, ramo de atuação e situação cadastral das empresas.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%232457e6%27/%3E%3Ccircle cx=%2714%27 cy=%2714%27 r=%276%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273%27/%3E%3Cpath d=%27M19 19l7 7%27 stroke=%27white%27 stroke-width=%273%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<style>
+  :root{--bg:#f3f5f9;--card:#fff;--ink:#0f1b2d;--mut:#64708a;--line:#e4e9f2;--pri:#2457e6;--pri2:#5b3df5;--soft:#eef2ff;
+    --ok:#0f7a43;--okbg:#e4f6ec;--warn:#a65f00;--warnbg:#fff3dc;--bad:#b3261e;--badbg:#fdeceb;--shadow:0 1px 2px rgba(15,27,45,.05),0 8px 24px rgba(15,27,45,.06)}
+  @media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#131c2f;--ink:#e8edf7;--mut:#93a1bd;--line:#223049;--pri:#6c8cff;--pri2:#9b87ff;--soft:#1a2542;
+    --ok:#5fd694;--okbg:#10301f;--warn:#f2b45a;--warnbg:#33260d;--bad:#ff8b84;--badbg:#3a1614;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25)}}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.55 Inter,system-ui,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  .hero{background:linear-gradient(135deg,#17306e 0%,#2457e6 55%,#5b3df5 100%);color:#fff;padding:44px 16px 96px}
+  .wrap{max-width:980px;margin:0 auto}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;opacity:.95}
+  .logo i{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-style:normal}
+  .hero h1{font-size:clamp(26px,4.2vw,38px);line-height:1.15;margin:18px 0 8px;letter-spacing:-.5px}
+  .hero p{margin:0;max-width:620px;color:rgba(255,255,255,.82)}
+  main{max-width:980px;margin:-64px auto 0;padding:0 16px 56px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .seg{display:inline-flex;background:var(--soft);border-radius:10px;padding:4px;gap:4px;margin-bottom:16px}
+  .seg button{background:transparent;color:var(--mut);border:0;padding:8px 16px;border-radius:7px;font-weight:600}
+  .seg button.on{background:var(--card);color:var(--pri);box-shadow:0 1px 3px rgba(15,27,45,.12)}
+  label{font-weight:600;font-size:14px;color:var(--mut);display:block;margin-bottom:8px}
+  input[type=text],textarea{width:100%;font:inherit;font-size:20px;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);letter-spacing:.5px;transition:.15s}
+  textarea{font-size:15px;min-height:120px;resize:vertical;letter-spacing:0}
+  input:focus,textarea:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 20%,transparent);background:var(--card)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  button{font:inherit;font-weight:600;padding:12px 22px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;cursor:pointer;transition:.15s}
+  button:hover{filter:brightness(1.07);transform:translateY(-1px)}
+  button.sec{background:var(--soft);color:var(--pri)}
+  button:disabled{opacity:.55;cursor:wait;transform:none}
+  .msg{padding:12px 16px;border-radius:12px;margin-top:14px;font-size:15px}
+  .msg.err{background:var(--badbg);color:var(--bad)} .msg.warn{background:var(--warnbg);color:var(--warn)} .msg.ok{background:var(--okbg);color:var(--ok)}
+  progress{width:100%;height:8px;margin-top:14px;accent-color:var(--pri)}
+  .hide{display:none}
+  .small{color:var(--mut);font-size:13px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.9px;color:var(--mut);margin:0 0 14px;font-weight:700}
+  .ident h3{font-size:clamp(20px,3vw,26px);line-height:1.25;margin:0 0 4px;letter-spacing:-.3px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-size:13px;font-weight:600;background:var(--soft);color:var(--pri)}
+  .chip.ok{background:var(--okbg);color:var(--ok)} .chip.bad{background:var(--badbg);color:var(--bad)} .chip.warn{background:var(--warnbg);color:var(--warn)}
+  .chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.8}
+  .ramo{margin-top:16px;padding:16px;border-radius:12px;background:var(--soft)}
+  .ramo .t{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);font-weight:700}
+  .ramo .v{font-size:20px;font-weight:700;margin-top:2px;letter-spacing:-.2px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+  .kpi .k{font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .kpi .v{font-size:17px;font-weight:700;margin-top:2px;overflow-wrap:break-word;word-break:keep-all}
+  dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 28px;margin:0}
+  dl div{min-width:0} dt{font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  dd{margin:2px 0 0;font-weight:500;overflow-wrap:anywhere}
+  .div-tag{display:inline-block;margin-left:6px;padding:0 8px;border-radius:99px;font-size:11px;font-weight:700;background:var(--warnbg);color:var(--warn);vertical-align:middle;cursor:help}
+  .sub-h{font-size:13px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin:22px 0 12px;padding-top:18px;border-top:1px solid var(--line)}
+  .cnae{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line)} .cnae:last-child{border:0}
+  .code{font:600 13px ui-monospace,Consolas,monospace;background:var(--soft);color:var(--pri);padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .code.main{background:var(--pri);color:#fff}
+  .socios{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .socio{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .socio b{display:block;line-height:1.3} .socio span{display:block;font-size:13px;color:var(--mut)}
+  .diff{padding:12px 0;border-bottom:1px solid var(--line)} .diff:last-of-type{border:0}
+  .diff b{display:block;margin-bottom:4px}
+  .diff .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px}
+  .diff .cols div{background:var(--bg);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere}
+  .diff .cols small{display:block;color:var(--mut);font-weight:600}
+  table.res{width:100%;border-collapse:collapse;font-size:14px}
+  .res th{text-align:left;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.6px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  .res td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .scroll{overflow-x:auto}
+  .src{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  details{margin-top:12px} summary{cursor:pointer;color:var(--pri);font-weight:600}
+  pre{background:#0b1220;color:#dbe4f5;padding:14px;border-radius:12px;overflow:auto;max-height:320px;font-size:12px}
+  .drop{border:2px dashed var(--line);border-radius:14px;padding:30px 16px;text-align:center;cursor:pointer;background:var(--bg);transition:.15s}
+  .drop:hover,.drop.on{border-color:var(--pri);background:var(--soft)}
+  .drop b{display:block;font-size:17px;margin-bottom:4px} .drop .ico{font-size:30px;line-height:1;margin-bottom:6px;color:var(--pri)}
+  .arq{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--soft)}
+  .arq .n{font-weight:600;overflow-wrap:anywhere} .arq a{margin-left:auto;color:var(--pri);cursor:pointer;font-weight:600;font-size:14px}
+  .opt{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px;color:var(--mut)} .opt input{margin-top:4px;width:16px;height:16px;accent-color:var(--pri)}
+  footer{max-width:980px;margin:0 auto;padding:0 16px 40px;color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<div class="hero"><div class="wrap">
+  <div class="logo"><i>&#9906;</i> Consulta CNPJ</div>
+  <h1>Conheça qualquer empresa em segundos</h1>
+  <p>Digite um CNPJ ou envie uma planilha e veja ramo de atuação, porte, situação cadastral, endereço e sócios. Dados públicos de fontes abertas, com opção de conferir uma fonte contra a outra.</p>
+</div></div>
+<main>
+  <div class="card">
+    <div class="seg"><button id="tabUm" class="on" type="button">Um CNPJ</button><button id="tabLista" type="button">Lista</button><button id="tabArq" type="button">Enviar arquivo</button></div>
+    <div id="boxUm">
+      <label for="cnpj">CNPJ da empresa</label>
+      <input id="cnpj" type="text" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" autofocus>
+    </div>
+    <div id="boxLista" class="hide">
+      <label for="lista">Um CNPJ por linha (ou separados por vírgula)</label>
+      <textarea id="lista" placeholder="00.000.000/0001-91&#10;33.000.167/0001-01"></textarea>
+    </div>
+    <div id="boxArq" class="hide">
+      <div class="drop" id="drop"><div class="ico">&#8679;</div><b>Arraste a planilha aqui ou clique para escolher</b>
+        <span class="small">Aceita Excel (.xlsx), CSV e TXT. O sistema acha sozinho a coluna do CNPJ e devolve a sua planilha com os dados da empresa ao lado.</span></div>
+      <input id="arquivo" type="file" accept=".xlsx,.xlsm,.csv,.txt,.tsv,text/plain,text/csv" class="hide">
+      <div id="arqInfo"></div>
+    </div>
+    <label class="opt hide" id="optConferir"><input type="checkbox" id="conferir"><span><b>Conferir também na segunda fonte (CNPJá)</b><br>Mais confiável, porém lento: cerca de 13 segundos por CNPJ. Sem isso, a consulta é rápida e a segunda fonte só entra se a primeira falhar.</span></label>
+    <div class="row">
+      <button id="btnBuscar" type="button">Consultar</button>
+      <button id="btnXlsx" class="hide" type="button">Baixar planilha (.xlsx)</button>
+      <button id="btnCsv" class="sec hide" type="button">CSV</button>
+      <button id="btnJson" class="sec hide" type="button">Dados completos (JSON)</button>
+    </div>
+    <progress id="prog" class="hide" value="0" max="1"></progress>
+    <div id="progTxt" class="small"></div>
+    <div id="aviso"></div>
+  </div>
+  <div id="resultado"></div>
+</main>
+<footer>Fontes: OpenCNPJ (api.opencnpj.org) e CNPJá Open (open.cnpja.com), gratuitas, baseadas nos dados abertos da Receita Federal, atualizados mensalmente. Só informações públicas; documentos de sócios pessoa física já vêm parcialmente ocultos.</footer>
+<script>
+/* ===== NÚCLEO (testável) ===== */
+/*CORE_START*/
+const URL_OPEN = c => `https://api.opencnpj.org/${c}`;
+const URL_CNPJA = c => `https://open.cnpja.com/office/${c}`;
+
+function soDigitos(s){ return String(s||'').replace(/\D/g,''); }
+function formatCnpj(d){ d=soDigitos(d).padStart(14,'0'); return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5'); }
+function validaCnpj(c){
+  c = soDigitos(c);
+  if (c.length!==14 || /^(\d)\1+$/.test(c)) return false;
+  const calc = n => { let p = n-7, s=0; for (let i=0;i<n;i++){ s += +c[i]*p--; if(p<2) p=9; } const r=s%11; return r<2?0:11-r; };
+  return calc(12)===+c[12] && calc(13)===+c[13];
+}
+function extraiCnpjs(texto){
+  const vistos = new Set(), validos=[], invalidos=[];
+  String(texto).split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean).forEach(t=>{
+    const d = soDigitos(t);
+    if (vistos.has(d)) return; vistos.add(d);
+    (validaCnpj(d)?validos:invalidos).push(validaCnpj(d)?d:t);
+  });
+  return {validos, invalidos};
+}
+const nz = v => (v===undefined||v===null||v==='') ? '' : v;
+const cnae7 = v => { const d=soDigitos(v); return d? d.padStart(7,'0') : ''; };
+function num(v){ if(typeof v==='number') return v; if(!v) return null; const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?null:n; }
+
+function normOpen(j){
+  if(!j) return null;
+  const tel = (j.telefones||[]).map(t=>`(${t.ddd}) ${t.numero}${t.is_fax?' (fax)':''}`);
+  const cn = j.cnaes||[];
+  const princ = cn.find(c=>c.is_principal);
+  return {
+    cnpj: j.cnpj, razao_social: nz(j.razao_social), nome_fantasia: nz(j.nome_fantasia),
+    situacao: nz(j.situacao_cadastral), data_situacao: nz(j.data_situacao_cadastral),
+    motivo_situacao: nz(j.motivo_situacao_cadastral && j.motivo_situacao_cadastral.descricao),
+    tipo: nz(j.matriz_filial), abertura: nz(j.data_inicio_atividade),
+    natureza_juridica: nz(j.natureza_juridica), porte: nz(j.porte_empresa),
+    capital_social: num(j.capital_social),
+    cnae_principal: { codigo: nz(j.cnae_principal || (princ&&princ.codigo)), descricao: nz(princ&&princ.descricao) },
+    cnaes_secundarios: cn.filter(c=>!c.is_principal).map(c=>({codigo:c.codigo, descricao:c.descricao})),
+    logradouro: [j.tipo_logradouro, j.logradouro].filter(Boolean).join(' '), numero: nz(j.numero), complemento: nz(j.complemento),
+    bairro: nz(j.bairro), cep: nz(j.cep), municipio: nz(j.municipio), uf: nz(j.uf),
+    emails: j.email?[j.email]:[], telefones: tel,
+    simples: nz(j.opcao_simples)==='S'?'Sim':(j.opcao_simples?'Não':''), data_opcao_simples: nz(j.data_opcao_simples),
+    mei: nz(j.opcao_mei)==='S'?'Sim':(j.opcao_mei?'Não':''),
+    ente_federativo: nz(j.ente_federativo), situacao_especial: nz(j.situacao_especial),
+    socios: (j.QSA||[]).map(s=>({nome:s.nome_socio, documento:s.cnpj_cpf_socio, qualificacao:s.qualificacao_socio, entrada:s.data_entrada_sociedade, tipo:s.identificador_socio, faixa_etaria:nz(s.faixa_etaria)})),
+    atualizado_em: nz(j.updated_at)
+  };
+}
+function normCnpja(j){
+  if(!j) return null;
+  const c = j.company||{}, a = j.address||{}, ma = j.mainActivity||{};
+  const sim = c.simples, mei = c.simei;
+  return {
+    cnpj: j.taxId, razao_social: nz(c.name), nome_fantasia: nz(j.alias),
+    situacao: nz(j.status&&j.status.text), data_situacao: nz(j.statusDate),
+    motivo_situacao: nz(j.reason&&j.reason.text),
+    tipo: j.head===true?'Matriz':(j.head===false?'Filial':''), abertura: nz(j.founded),
+    natureza_juridica: nz(c.nature&&c.nature.text), porte: nz(c.size&&c.size.text),
+    capital_social: num(c.equity),
+    cnae_principal: { codigo: cnae7(ma.id), descricao: nz(ma.text) },
+    cnaes_secundarios: (j.sideActivities||[]).map(x=>({codigo:cnae7(x.id), descricao:x.text})),
+    logradouro: nz(a.street), numero: nz(a.number), complemento: nz(a.details), bairro: nz(a.district),
+    cep: nz(a.zip), municipio: nz(a.city), uf: nz(a.state),
+    emails: (j.emails||[]).map(e=>e.address), telefones: (j.phones||[]).map(p=>`(${p.area}) ${p.number}`),
+    simples: sim? (sim.optant?'Sim':'Não') : '', data_opcao_simples: nz(sim&&sim.since),
+    mei: mei? (mei.optant?'Sim':'Não') : '',
+    ente_federativo: '', situacao_especial: '',
+    socios: (c.members||[]).map(m=>({nome:m.person&&m.person.name, documento:m.person&&m.person.taxId, qualificacao:m.role&&m.role.text, entrada:m.since, tipo:m.person&&m.person.type, faixa_etaria:nz(m.person&&m.person.age)})),
+    atualizado_em: nz(j.updated)
+  };
+}
+
+const CAMPOS = [
+  ['razao_social','Razão social'],['nome_fantasia','Nome fantasia'],['situacao','Situação cadastral'],
+  ['data_situacao','Data da situação'],['motivo_situacao','Motivo da situação'],['tipo','Matriz / Filial'],
+  ['abertura','Início da atividade'],['natureza_juridica','Natureza jurídica'],['porte','Porte'],
+  ['capital_social','Capital social'],['simples','Optante pelo Simples'],['data_opcao_simples','Opção pelo Simples desde'],['mei','MEI'],
+  ['ente_federativo','Ente federativo'],['situacao_especial','Situação especial']
+];
+const CAMPOS_END = [['logradouro','Logradouro'],['numero','Número'],['complemento','Complemento'],['bairro','Bairro'],['cep','CEP'],['municipio','Município'],['uf','UF']];
+
+function chave(v){ // forma comparável
+  if (v===null||v===undefined) return '';
+  if (typeof v==='number') return String(Math.round(v*100)/100);
+  return String(v).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+}
+function porcao(v){ return v; }
+
+/* Mescla: base = OpenCNPJ; CNPJá completa lacunas. Divergências ficam listadas. */
+function mescla(a, b){
+  const out = {campos:{}, divergencias:[], fontes:{open:!!a, cnpja:!!b}};
+  const todos = [...CAMPOS, ...CAMPOS_END, ['cnae_principal.codigo','CNAE principal (código)'], ['cnae_principal.descricao','CNAE principal (descrição)']];
+  const get = (o,k)=> k.includes('.') ? k.split('.').reduce((x,p)=>x&&x[p],o) : (o?o[k]:undefined);
+  todos.forEach(([k,rot])=>{
+    const va = a?get(a,k):'', vb = b?get(b,k):'';
+    const ea = chave(va)!=='' , eb = chave(vb)!=='';
+    let valor, fonte;
+    if (ea){ valor=va; fonte='OpenCNPJ'; } else if (eb){ valor=vb; fonte='CNPJá'; } else { valor=''; fonte=''; }
+    // CEP/UF/etc: comparação ignora pontuação e acentos
+    const diverge = ea && eb && chave(va)!==chave(vb);
+    // descrição do CNAE: só alerta se o código também difere (textos variam entre fontes)
+    if (diverge && k==='cnae_principal.descricao') { out.campos[k]={rotulo:rot,valor,fonte,diverge:false}; return; }
+    // situação "Ativa" x "ATIVA" já é normalizada pela chave()
+    out.campos[k] = {rotulo:rot, valor, fonte, diverge, a:va, b:vb};
+    if (diverge) out.divergencias.push({campo:rot, open:va, cnpja:vb});
+  });
+  // listas
+  const pick = k => (a&&a[k]&&a[k].length)?a[k]:((b&&b[k])||[]);
+  out.cnaes_secundarios = pick('cnaes_secundarios');
+  out.emails = [...new Set([...(a?a.emails:[]), ...(b?b.emails:[])].map(e=>String(e).toLowerCase()))];
+  out.telefones = [...new Set([...(a?a.telefones:[]), ...(b?b.telefones:[])])];
+  out.socios = pick('socios');
+  if (a&&b){
+    const sa = new Set(a.cnaes_secundarios.map(c=>chave(c.codigo))), sb = new Set(b.cnaes_secundarios.map(c=>chave(c.codigo)));
+    const soA=[...sa].filter(x=>!sb.has(x)), soB=[...sb].filter(x=>!sa.has(x));
+    if (sa.size && sb.size && (soA.length||soB.length)) out.divergencias.push({campo:'CNAEs secundários', open:`${sa.size} códigos`, cnpja:`${sb.size} códigos`});
+    if (a.socios.length && b.socios.length && a.socios.length!==b.socios.length) out.divergencias.push({campo:'Quantidade de sócios', open:a.socios.length, cnpja:b.socios.length});
+  }
+  out.atualizado = {open:a&&a.atualizado_em, cnpja:b&&b.atualizado_em};
+  out.cnpj = (a&&a.cnpj)||(b&&b.cnpj)||'';
+  return out;
+}
+
+/* ===== REDE ===== */
+async function buscaJson(url, rotulo, opts={}){
+  const tent = (opts.retry429||0);
+  for (let i=0;i<=tent;i++){
+    const ctl = new AbortController(); const t=setTimeout(()=>ctl.abort(), opts.timeout||20000);
+    try{
+      const r = await fetch(url,{signal:ctl.signal, headers:{'Accept':'application/json'}});
+      if (r.status===404) return {erro:'não encontrado', codigo:404};
+      if (r.status===429){ if(i<tent){ await new Promise(s=>setTimeout(s,15000*(i+1))); continue; } return {erro:'limite de consultas atingido (aguarde 1 minuto)', codigo:429}; }
+      if (r.status===402) return {erro:'sem dados para este CNPJ nesta fonte (empresa muito recente?)', codigo:402};
+      if (!r.ok) return {erro:`erro ${r.status}`, codigo:r.status};
+      return {dados: await r.json()};
+    }catch(e){
+      return {erro: e.name==='AbortError' ? 'demorou demais' : 'o navegador bloqueou ou a internet falhou', codigo:0, rede:true};
+    } finally { clearTimeout(t); }
+  }
+}
+async function consultaUm(cnpj, esperaCnpja){
+  const pOpen = buscaJson(URL_OPEN(cnpj));
+  const pCnpja = (async()=>{ if(esperaCnpja) await esperaCnpja(); return buscaJson(URL_CNPJA(cnpj)); })();
+  const [ro, rc] = await Promise.all([pOpen, pCnpja]);
+  const m = mescla(ro.dados?normOpen(ro.dados):null, rc.dados?normCnpja(rc.dados):null);
+  m.status = {open: ro.dados?'ok':ro.erro, cnpja: rc.dados?'ok':rc.erro};
+  m.bruto = {opencnpj: ro.dados||null, cnpja: rc.dados||null};
+  if (!m.cnpj) m.cnpj = cnpj;
+  return m;
+}
+
+async function consultaLote(cnpj, conferir, espera){
+  const ro = await buscaJson(URL_OPEN(cnpj),'open',{retry429:3});
+  let rc = null;
+  if (conferir || !ro.dados){ if(espera) await espera(); rc = await buscaJson(URL_CNPJA(cnpj),'cnpja',{retry429:1}); }
+  const m = mescla(ro.dados?normOpen(ro.dados):null, rc&&rc.dados?normCnpja(rc.dados):null);
+  m.status = {open: ro.dados?'ok':ro.erro, cnpja: rc?(rc.dados?'ok':rc.erro):'não consultada'};
+  m.bruto = {opencnpj: ro.dados||null, cnpja: rc&&rc.dados||null};
+  if (!m.cnpj) m.cnpj = cnpj;
+  return m;
+}
+async function processaLote(unicos, conferir, espera, onProg, paralelo=4){
+  const mapa=new Map(), fila=[...unicos]; let feitos=0;
+  await Promise.all(Array.from({length:Math.min(paralelo,fila.length)},async()=>{
+    while(fila.length){ const c=fila.shift(); mapa.set(c, await consultaLote(c,conferir,espera)); onProg(++feitos, c); }
+  }));
+  return new Map(unicos.map(c=>[c,mapa.get(c)])); // mantém a ordem original
+}
+/* ===== EXPORTAÇÃO ===== */
+const moeda = v => (v===null||v===undefined||v==='')?'':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+function csvCell(v){ v=(v===null||v===undefined)?'':String(v); if(/^[=+@\-\t\r]/.test(v)&&!/^-?[\d.,]+$/.test(v)) v="'"+v; return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function linhaPlanilha(m){
+  const c=k=>m.campos[k]?m.campos[k].valor:'';
+  return {
+    'CNPJ': formatCnpj(m.cnpj), 'Razão social': c('razao_social'), 'Nome fantasia': c('nome_fantasia'),
+    'Situação cadastral': c('situacao'), 'Data da situação': c('data_situacao'), 'Matriz/Filial': c('tipo'),
+    'Início da atividade': c('abertura'), 'CNAE principal (código)': c('cnae_principal.codigo'),
+    'Ramo de atuação (CNAE principal)': c('cnae_principal.descricao'),
+    'CNAEs secundários': m.cnaes_secundarios.map(x=>`${x.codigo} - ${x.descricao}`).join(' | '),
+    'Natureza jurídica': c('natureza_juridica'), 'Porte': c('porte'), 'Capital social': c('capital_social')===''?'':String(c('capital_social')).replace('.',','),
+    'Simples Nacional': c('simples'), 'MEI': c('mei'),
+    'Endereço': [c('logradouro'), c('numero'), c('complemento')].filter(Boolean).join(', '),
+    'Bairro': c('bairro'), 'CEP': c('cep'), 'Município': c('municipio'), 'UF': c('uf'),
+    'E-mails': m.emails.join(' | '), 'Telefones': m.telefones.join(' | '),
+    'Sócios': m.socios.map(s=>`${s.nome} (${s.qualificacao||''})`).join(' | '),
+    'Fontes consultadas': [m.fontes.open?'OpenCNPJ':'', m.fontes.cnpja?'CNPJá':''].filter(Boolean).join(' + '),
+    'Divergências entre fontes': m.divergencias.map(d=>`${d.campo}: ${d.open} x ${d.cnpja}`).join(' | '),
+    'Erros': ['open','cnpja'].filter(k=>m.status[k]!=='ok').map(k=>`${k==='open'?'OpenCNPJ':'CNPJá'}: ${m.status[k]}`).join(' | ')
+  };
+}
+function geraCsv(lista){
+  const linhas = lista.map(linhaPlanilha); if(!linhas.length) return '';
+  const cab = Object.keys(linhas[0]);
+  return '﻿' + [cab.join(';'), ...linhas.map(l=>cab.map(k=>csvCell(l[k])).join(';'))].join('\r\n');
+}
+
+/* ===== ARQUIVOS: detecção de CNPJ, CSV/TXT, XLSX (leitura e escrita), setor ===== */
+function achaCnpjsEmTexto(t){
+  const out=[], re=/(?<!\d)\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}(?!\d)/g; let m;
+  while((m=re.exec(String(t)))){ const d=soDigitos(m[0]); if(validaCnpj(d)) out.push(d); }
+  return out;
+}
+function cnpjDeCelula(v){
+  const s=String(v===undefined||v===null?'':v).trim(); if(!s) return null;
+  if(/^[\d.\/\-\s]+$/.test(s)){ let d=soDigitos(s); if(d.length>=12&&d.length<=14){ d=d.padStart(14,'0'); if(validaCnpj(d)) return d; } }
+  const a=achaCnpjsEmTexto(s); return a.length?a[0]:null;
+}
+function parseCsv(texto){
+  texto=String(texto).replace(/^﻿/,'');
+  const prim=texto.split(/\r?\n/).find(l=>l.trim())||'';
+  const delim=[';','\t',','].map(d=>[d,(prim.match(new RegExp(d==='\t'?'\\t':d,'g'))||[]).length]).sort((a,b)=>b[1]-a[1])[0];
+  const D=delim[1]>0?delim[0]:';';
+  const rows=[]; let row=[], cel='', q=false;
+  for(let i=0;i<texto.length;i++){
+    const ch=texto[i];
+    if(q){ if(ch==='"'){ if(texto[i+1]==='"'){cel+='"';i++;} else q=false; } else cel+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===D){ row.push(cel); cel=''; }
+    else if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&texto[i+1]==='\n') i++; row.push(cel); cel=''; if(row.some(c=>c.trim()!=='')) rows.push(row); row=[]; }
+    else cel+=ch;
+  }
+  row.push(cel); if(row.some(c=>c.trim()!=='')) rows.push(row);
+  return rows;
+}
+const letraCol = i => { let s=''; i++; while(i>0){ const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=Math.floor((i-1)/26); } return s; };
+
+/* Plano de consulta: preserva as colunas originais e acha a coluna do CNPJ */
+function planoDeLista(cnpjs){
+  return {cab:['CNPJ informado'], colCnpj:0, linhas:cnpjs.map(c=>({celulas:[formatCnpj(c)], cnpj:c}))};
+}
+function planoDeTabela(rows){
+  if(!rows.length) return {erro:'O arquivo está vazio.'};
+  const larg=Math.max(...rows.map(r=>r.length)), cont=new Array(larg).fill(0);
+  rows.forEach(r=>r.forEach((c,i)=>{ if(cnpjDeCelula(c)) cont[i]++; }));
+  const total=cont.reduce((a,b)=>a+b,0);
+  if(!total) return {erro:'Não encontrei nenhum CNPJ válido no arquivo.'};
+  const col=cont.indexOf(Math.max(...cont));
+  const temCab=!cnpjDeCelula(rows[0][col]);
+  const cab = temCab ? Array.from({length:larg},(_,i)=>String(rows[0][i]||`Coluna ${letraCol(i)}`)) : Array.from({length:larg},(_,i)=>i===col?'CNPJ informado':`Coluna ${letraCol(i)}`);
+  const corpo = temCab?rows.slice(1):rows;
+  const linhas = corpo.map(r=>{ const cel=Array.from({length:larg},(_,i)=>r[i]===undefined?'':r[i]); return {celulas:cel, cnpj:cnpjDeCelula(r[col])}; }).filter(l=>l.celulas.some(c=>String(c).trim()!==''));
+  return {cab, colCnpj:col, linhas};
+}
+function planoDeTexto(texto){
+  const linhasTxt=texto.split(/\r?\n/).filter(l=>l.trim());
+  const multi=linhasTxt.length>1 && linhasTxt.every(l=>/[;\t]/.test(l));
+  if(multi) return planoDeTabela(parseCsv(texto));
+  const achados=achaCnpjsEmTexto(texto);
+  if(!achados.length) return {erro:'Não encontrei nenhum CNPJ válido no arquivo.'};
+  return planoDeLista(achados);
+}
+const unicosDoPlano = p => [...new Set(p.linhas.map(l=>l.cnpj).filter(Boolean))];
+
+/* ----- ZIP / XLSX (sem bibliotecas) ----- */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function zipStore(files){ // files: [{nome, dados:Uint8Array}]
+  const enc=new TextEncoder(), partes=[], central=[]; let off=0;
+  files.forEach(f=>{
+    const nome=enc.encode(f.nome), crc=crc32(f.dados), n=f.dados.length;
+    const lh=new DataView(new ArrayBuffer(30)); lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true); lh.setUint16(8,0,true);
+    lh.setUint16(10,0,true); lh.setUint16(12,0x21,true); lh.setUint32(14,crc,true); lh.setUint32(18,n,true); lh.setUint32(22,n,true); lh.setUint16(26,nome.length,true); lh.setUint16(28,0,true);
+    partes.push(new Uint8Array(lh.buffer),nome,f.dados);
+    const ch=new DataView(new ArrayBuffer(46)); ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true); ch.setUint16(8,0x0800,true); ch.setUint16(10,0,true);
+    ch.setUint16(12,0,true); ch.setUint16(14,0x21,true); ch.setUint32(16,crc,true); ch.setUint32(20,n,true); ch.setUint32(24,n,true); ch.setUint16(28,nome.length,true); ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer),nome);
+    off+=30+nome.length+n;
+  });
+  const tamC=central.reduce((a,p)=>a+p.length,0);
+  const ec=new DataView(new ArrayBuffer(22)); ec.setUint32(0,0x06054b50,true); ec.setUint16(8,files.length,true); ec.setUint16(10,files.length,true); ec.setUint32(12,tamC,true); ec.setUint32(16,off,true);
+  const todos=[...partes,...central,new Uint8Array(ec.buffer)], out=new Uint8Array(todos.reduce((a,p)=>a+p.length,0)); let o=0;
+  todos.forEach(p=>{out.set(p,o);o+=p.length;}); return out;
+}
+const xmlEsc = s => String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const xmlDec = s => s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&amp;/g,'&');
+
+/* célula: string | número | {n:número, dinheiro:true} | null ; 1ª linha vira cabeçalho */
+function sheetXml(rows, larguras){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>';
+  if(larguras&&larguras.length) x+='<cols>'+larguras.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>';
+  x+='<sheetData>';
+  rows.forEach((r,ri)=>{
+    x+=`<row r="${ri+1}">`;
+    r.forEach((c,ci)=>{
+      if(c===null||c===undefined||c==='') return;
+      const ref=letraCol(ci)+(ri+1);
+      if(typeof c==='object'&&c.n!==undefined) x+=`<c r="${ref}" s="${c.dinheiro?2:0}"><v>${c.n}</v></c>`;
+      else if(typeof c==='number') x+=`<c r="${ref}"><v>${c}</v></c>`;
+      else x+=`<c r="${ref}" t="inlineStr"${ri===0?' s="1"':''}><is><t xml:space="preserve">${xmlEsc(c)}</t></is></c>`;
+    });
+    x+='</row>';
+  });
+  const ult=letraCol(Math.max(0,(rows[0]||[]).length-1))+Math.max(1,rows.length);
+  return x+`</sheetData><autoFilter ref="A1:${ult}"/></worksheet>`;
+}
+function geraXlsx(abas){ // abas: [{nome, rows, larguras}]
+  const enc=new TextEncoder(), u=s=>enc.encode(s), H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const nomes=abas.map((a,i)=>xmlEsc(a.nome.replace(/[\\\/?*\[\]:]/g,' ').slice(0,31))||`Plan${i+1}`);
+  const files=[
+    {nome:'[Content_Types].xml',dados:u(H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+abas.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'</Types>')},
+    {nome:'_rels/.rels',dados:u(H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')},
+    {nome:'xl/workbook.xml',dados:u(H+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+nomes.map((n,i)=>`<sheet name="${n}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')+'</sheets></workbook>')},
+    {nome:'xl/_rels/workbook.xml.rels',dados:u(H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+abas.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')+`<Relationship Id="rId${abas.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)},
+    {nome:'xl/styles.xml',dados:u(H+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;R$&quot;\\ #,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2457E6"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>')},
+    ...abas.map((a,i)=>({nome:`xl/worksheets/sheet${i+1}.xml`,dados:u(sheetXml(a.rows,a.larguras))}))
+  ];
+  return zipStore(files);
+}
+
+async function inflaRaw(bytes){
+  const ds=new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+}
+async function leZip(buf){ // devolve {nome: ()=>Promise<string>}
+  const b=new Uint8Array(buf), dv=new DataView(b.buffer,b.byteOffset,b.byteLength);
+  let e=-1; for(let i=b.length-22;i>=Math.max(0,b.length-70000);i--){ if(dv.getUint32(i,true)===0x06054b50){e=i;break;} }
+  if(e<0) throw new Error('Arquivo não é um XLSX válido.');
+  const n=dv.getUint16(e+10,true); let p=dv.getUint32(e+16,true); const dec=new TextDecoder(), mapa={};
+  for(let i=0;i<n;i++){
+    if(dv.getUint32(p,true)!==0x02014b50) throw new Error('XLSX corrompido.');
+    const met=dv.getUint16(p+10,true), cs=dv.getUint32(p+20,true), nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true), lo=dv.getUint32(p+42,true);
+    const nome=dec.decode(b.subarray(p+46,p+46+nl));
+    mapa[nome]=async()=>{ const ll=dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true), ini=lo+30+ll, raw=b.subarray(ini,ini+cs);
+      return dec.decode(met===0?raw:await inflaRaw(raw)); };
+    p+=46+nl+el+cl;
+  }
+  return mapa;
+}
+function numStr(v){ if(/e/i.test(v)){ const n=Number(v); if(isFinite(n)&&Math.abs(n)<1e21) return n.toFixed(0); } return v; }
+async function leXlsx(buf){
+  const z=await leZip(buf);
+  if(!z['xl/workbook.xml']) throw new Error('Arquivo não é um XLSX válido.');
+  let alvo='xl/worksheets/sheet1.xml';
+  try{
+    const wb=await z['xl/workbook.xml'](), rels=z['xl/_rels/workbook.xml.rels']?await z['xl/_rels/workbook.xml.rels']():'';
+    const rid=(/<sheet\b[^>]*\br:id="([^"]+)"/.exec(wb)||[])[1];
+    if(rid){ const rr=new RegExp('<Relationship\\b[^>]*Id="'+rid+'"[^>]*>').exec(rels); const t=rr&&/Target="([^"]+)"/.exec(rr[0]); if(t){ alvo=t[1].startsWith('/')?t[1].slice(1):'xl/'+t[1]; } }
+  }catch(_){}
+  if(!z[alvo]) alvo=Object.keys(z).find(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k));
+  if(!alvo) throw new Error('Não encontrei planilha dentro do arquivo.');
+  const shared=[];
+  if(z['xl/sharedStrings.xml']){ const ss=await z['xl/sharedStrings.xml'](); (ss.match(/<si\b[\s\S]*?<\/si>/g)||[]).forEach(si=>{ shared.push(xmlDec(((si.match(/<t\b[^>]*>[\s\S]*?<\/t>/g)||[]).map(t=>t.replace(/^<t\b[^>]*>/,'').replace(/<\/t>$/,''))).join(''))); }); }
+  const datas=new Set();
+  if(z['xl/styles.xml']){
+    const st=await z['xl/styles.xml'](), custom={};
+    (st.match(/<numFmt\b[^>]*>/g)||[]).forEach(n=>{ const id=/numFmtId="(\d+)"/.exec(n), fc=/formatCode="([^"]*)"/.exec(n); if(id&&fc) custom[id[1]]=xmlDec(fc[1]); });
+    const xfs=(/<cellXfs\b[\s\S]*?<\/cellXfs>/.exec(st)||[''])[0].match(/<xf\b[^>]*>/g)||[];
+    xfs.forEach((x,i)=>{ const id=(/numFmtId="(\d+)"/.exec(x)||[])[1]; if(id===undefined) return;
+      const n=+id, cf=custom[id]; if((n>=14&&n<=22)||(n>=45&&n<=47)||(cf&&/[dmy]/i.test(cf.replace(/"[^"]*"|\[[^\]]*\]|\\./g,'')))) datas.add(i); });
+  }
+  const xml=await z[alvo](), rows=[];
+  (xml.match(/<row\b[\s\S]*?<\/row>/g)||[]).forEach(rw=>{
+    const linha=[]; const re=/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let m;
+    while((m=re.exec(rw))){
+      const at=m[1], corpo=m[2]||'', ref=/\br="([A-Z]+)\d+"/.exec(at), t=(/\bt="([^"]+)"/.exec(at)||[])[1];
+      let ci=0; if(ref) for(const ch of ref[1]) ci=ci*26+(ch.charCodeAt(0)-64); ci=ci?ci-1:linha.length;
+      let val='';
+      if(t==='s'){ const v=/<v>([\s\S]*?)<\/v>/.exec(corpo); val=v?(shared[+v[1]]||''):''; }
+      else if(t==='inlineStr'){ val=xmlDec((corpo.match(/<t\b[^>]*>[\s\S]*?<\/t>/g)||[]).map(x=>x.replace(/^<t\b[^>]*>/,'').replace(/<\/t>$/,'')).join('')); }
+      else { const v=/<v>([\s\S]*?)<\/v>/.exec(corpo);
+        if(!v) val='';
+        else if(t==='str'||t==='e') val=xmlDec(v[1]);
+        else if(t==='b') val=v[1]==='1'?'VERDADEIRO':'FALSO';
+        else { const sx=(/\bs="(\d+)"/.exec(at)||[])[1], num=Number(v[1]);
+          if(sx!==undefined&&datas.has(+sx)&&isFinite(num)){ const d=new Date(Date.UTC(1899,11,30)+Math.round(num*864e5)); val=num%1===0?`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`:`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`; }
+          else { const ns=numStr(v[1]); val=(isFinite(Number(ns))&&ns.replace(/[-.]/g,'').length<=15)?Number(ns):ns; } } }
+      while(linha.length<ci) linha.push(''); linha[ci]=val;
+    }
+    if(linha.some(c=>String(c).trim()!=='')) rows.push(linha);
+  });
+  return rows;
+}
+async function lerArquivoEnviado(nome, buf){
+  const ext=(nome.split('.').pop()||'').toLowerCase();
+  if(ext==='xls') return {erro:'Arquivos .xls (Excel antigo) não são aceitos. Abra no Excel e salve como .xlsx ou .csv.'};
+  if(ext==='xlsx'||ext==='xlsm'){ try{ return planoDeTabela(await leXlsx(buf)); }catch(e){ return {erro:e.message}; } }
+  let texto; try{ texto=new TextDecoder('utf-8',{fatal:true}).decode(buf); }catch(_){ texto=new TextDecoder('windows-1252').decode(buf); }
+  if(ext==='csv') return planoDeTabela(parseCsv(texto));
+  return planoDeTexto(texto);
+}
+
+/* Setor aproximado: seções oficiais do CNAE, pela divisão (2 primeiros dígitos) */
+function setorCnae(codigo){
+  const d=parseInt(soDigitos(codigo).padStart(7,'0').slice(0,2),10); if(!d) return '';
+  const T=[[1,3,'Agropecuária e pesca'],[5,9,'Indústrias extrativas'],[10,33,'Indústria de transformação'],[35,35,'Eletricidade e gás'],[36,39,'Água, esgoto e resíduos'],[41,43,'Construção'],[45,47,'Comércio'],[49,53,'Transporte e logística'],[55,56,'Alojamento e alimentação'],[58,63,'Informação e comunicação'],[64,66,'Finanças e seguros'],[68,68,'Atividades imobiliárias'],[69,75,'Serviços profissionais e técnicos'],[77,82,'Serviços administrativos'],[84,84,'Administração pública'],[85,85,'Educação'],[86,88,'Saúde e assistência social'],[90,93,'Artes, cultura e esporte'],[94,96,'Outros serviços'],[97,97,'Serviços domésticos'],[99,99,'Organismos internacionais']];
+  const t=T.find(x=>d>=x[0]&&d<=x[1]); return t?t[2]:'';
+}
+
+/* Linha-resumo da planilha de saída */
+const CAB_RESUMO=['Razão social','Nome fantasia','Situação cadastral','Tamanho da empresa (porte)','Setor (aprox.)','Área de atuação (CNAE principal)','CNAE','Município','UF','Capital social (R$)','Aberta em','Simples / MEI','Observação'];
+function dataBrCore(s){ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||''); return m?`${m[3]}/${m[2]}/${m[1]}`:(s||''); }
+function resumoLinha(m, temCnpj){
+  if(!m) return CAB_RESUMO.map((_,i)=>i===CAB_RESUMO.length-1?(temCnpj?'Não consultado':'Sem CNPJ válido nesta linha'):'');
+  const c=k=>m.campos[k]?m.campos[k].valor:'';
+  if(!m.fontes.open&&!m.fontes.cnpja){ const er=['open','cnpja'].filter(k=>m.status[k]&&m.status[k]!=='ok'&&m.status[k]!=='não consultada').map(k=>`${k==='open'?'OpenCNPJ':'CNPJá'}: ${m.status[k]}`).join(' | ');
+    return CAB_RESUMO.map((_,i)=>i===CAB_RESUMO.length-1?('Não encontrado'+(er?` (${er})`:'')):''); }
+  const obs=[]; if(m.divergencias.length) obs.push('Fontes divergem: '+m.divergencias.map(d=>d.campo).join(', '));
+  if(c('motivo_situacao')&&String(c('situacao')).toUpperCase()!=='ATIVA') obs.push('Motivo: '+c('motivo_situacao'));
+  const cap=c('capital_social');
+  const mei=c('mei')==='Sim', simples=c('simples')==='Sim';
+  return [c('razao_social'),c('nome_fantasia'),c('situacao'),(c('porte')||'')+(mei?' (MEI)':''),setorCnae(c('cnae_principal.codigo')),c('cnae_principal.descricao'),c('cnae_principal.codigo'),c('municipio'),c('uf'),
+    (cap===''||cap===null)?'':{n:cap,dinheiro:true},dataBrCore(c('abertura')),mei?'MEI':(simples?'Simples Nacional':(c('simples')||c('mei')?'Não':'')),obs.join(' | ')];
+}
+function montaAbasSaida(plano, mapa){
+  const cab=[...plano.cab, 'CNPJ (formatado)', ...CAB_RESUMO];
+  const rows=[cab];
+  plano.linhas.forEach(l=>{ const m=l.cnpj?mapa.get(l.cnpj):null; rows.push([...l.celulas, l.cnpj?formatCnpj(l.cnpj):'', ...resumoLinha(m,!!l.cnpj)]); });
+  const larg=[...plano.cab.map(()=>22), 20, 38, 26, 18, 26, 28, 42, 10, 18, 8, 18, 14, 18, 42, 50].slice(0,cab.length);
+  const unicos=[...mapa.values()]; let completo=null;
+  if(unicos.length){ const ls=unicos.map(linhaPlanilha), ch=Object.keys(ls[0]); completo=[ch, ...ls.map(l=>ch.map(k=>l[k]))]; }
+  const abas=[{nome:'Resumo',rows,larguras:larg}];
+  if(completo) abas.push({nome:'Dados completos',rows:completo,larguras:ch=>0});
+  if(completo) abas[1].larguras=completo[0].map(h=>/Sócios|CNAEs|Divergências|Endereço/.test(h)?60:/Razão|Natureza|Ramo/.test(h)?38:20);
+  return abas;
+}
+/*CORE_END*/
+
+/* ===== INTERFACE ===== */
+const $ = id => document.getElementById(id);
+let resultados = [], planoAtual = null, mapaAtual = null, arquivoPlano = null;
+const esc = s => String(s===undefined||s===null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('cnpj').addEventListener('input', e=>{
+  let d = soDigitos(e.target.value).slice(0,14), o='';
+  for (let i=0;i<d.length;i++){ o+=d[i]; if(i===1||i===4)o+='.'; if(i===7)o+='/'; if(i===11)o+='-'; }
+  e.target.value = o;
+});
+$('cnpj').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btnBuscar').click(); });
+let modo='um';
+function setModo(m){
+  modo=m;
+  [['um','boxUm','tabUm'],['lista','boxLista','tabLista'],['arq','boxArq','tabArq']].forEach(([k,box,tab])=>{ $(box).classList.toggle('hide',m!==k); $(tab).classList.toggle('on',m===k); });
+  $('optConferir').classList.toggle('hide', m==='um');
+  atualizaAvisoTempo();
+}
+$('tabUm').onclick=()=>setModo('um'); $('tabLista').onclick=()=>setModo('lista'); $('tabArq').onclick=()=>setModo('arq');
+function aviso(tipo, html){ $('aviso').innerHTML = html?`<div class="msg ${tipo}">${html}</div>`:''; }
+
+/* controle de ritmo da CNPJá (5/min) */
+let ultimaCnpja = 0;
+async function esperaCnpja(){
+  const gap = 12500, agora = Date.now(), alvo = Math.max(agora, ultimaCnpja+gap);
+  ultimaCnpja = alvo; if (alvo>agora) await new Promise(r=>setTimeout(r, alvo-agora));
+}
+
+/* ---- envio de arquivo ---- */
+const drop=$('drop'), inputArq=$('arquivo');
+drop.onclick=()=>inputArq.click();
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
+drop.addEventListener('drop',e=>{ if(e.dataTransfer.files[0]) carregaArquivo(e.dataTransfer.files[0]); });
+inputArq.onchange=()=>{ if(inputArq.files[0]) carregaArquivo(inputArq.files[0]); };
+async function carregaArquivo(f){
+  aviso('',''); arquivoPlano=null; $('arqInfo').innerHTML='';
+  if(f.size>20*1024*1024){ aviso('err','Arquivo muito grande (máximo 20 MB).'); return; }
+  const plano = await lerArquivoEnviado(f.name, await f.arrayBuffer());
+  if(plano.erro){ aviso('err', esc(plano.erro)); return; }
+  arquivoPlano = plano; arquivoPlano.nome=f.name;
+  const u=unicosDoPlano(plano).length, semCnpj=plano.linhas.filter(l=>!l.cnpj).length;
+  $('arqInfo').innerHTML=`<div class="arq"><span class="n">${esc(f.name)}</span><span class="small">${plano.linhas.length} linha${plano.linhas.length===1?'':'s'} · ${u} CNPJ${u===1?'':'s'} diferente${u===1?'':'s'}${semCnpj?` · ${semCnpj} sem CNPJ válido`:''}</span><a id="trocar">trocar</a></div>`;
+  $('trocar').onclick=()=>{ inputArq.value=''; inputArq.click(); };
+  atualizaAvisoTempo();
+}
+function fmtTempo(s){ return s<90?`${Math.round(s)} segundos`:`${Math.round(s/60)} minutos`; }
+function atualizaAvisoTempo(){
+  if(modo==='um'){ aviso('',''); return; }
+  const n = modo==='arq' ? (arquivoPlano?unicosDoPlano(arquivoPlano).length:0) : extraiCnpjs($('lista').value).validos.length;
+  if(!n){ aviso('',''); return; }
+  const conf=$('conferir').checked, est = conf ? n*13 : Math.ceil(n/4)*1.5;
+  aviso(conf&&n>20?'warn':'ok', `Tempo estimado: ${fmtTempo(est)}${conf?' (com a segunda fonte)':''}. Deixe esta janela aberta durante a consulta.`);
+}
+$('conferir').onchange=atualizaAvisoTempo; $('lista').addEventListener('input',atualizaAvisoTempo);
+
+/* ---- consulta ---- */
+$('btnBuscar').onclick = async ()=>{
+  aviso('',''); resultados=[]; mapaAtual=null; planoAtual=null; $('resultado').innerHTML='';
+  ['btnXlsx','btnCsv','btnJson'].forEach(i=>$(i).classList.add('hide'));
+  let plano;
+  if(modo==='arq'){
+    if(!arquivoPlano){ aviso('err','Escolha um arquivo primeiro.'); return; }
+    plano=arquivoPlano;
+  } else {
+    const {validos, invalidos} = extraiCnpjs(modo==='um'?$('cnpj').value:$('lista').value);
+    if(!validos.length){ aviso('err', invalidos.length ? `CNPJ inválido: ${esc(invalidos.join(', '))}. Confira os números.` : 'Digite um CNPJ.'); return; }
+    plano = planoDeLista(validos);
+    if(invalidos.length) aviso('warn', `Ignorados por serem inválidos: ${esc(invalidos.join(', '))}`);
+  }
+  planoAtual = plano;
+  const unicos = unicosDoPlano(plano), prog=$('prog');
+  $('btnBuscar').disabled=true; prog.classList.remove('hide'); prog.max=unicos.length; prog.value=0;
+  const sinc = ()=>{ $('btnBuscar').textContent='Consultando…'; };
+  sinc();
+  let mapa;
+  const aoProgredir=(n)=>{ prog.value=n; $('progTxt').textContent=`${n} de ${unicos.length} consultados`; };
+  if(modo==='um'){
+    const m = await consultaUm(unicos[0], null); mapa=new Map([[unicos[0],m]]); aoProgredir(1);
+  } else {
+    mapa = await processaLote(unicos, $('conferir').checked, esperaCnpja, aoProgredir);
+  }
+  mapaAtual = mapa; resultados=[...mapa.values()];
+  $('btnBuscar').disabled=false; $('btnBuscar').textContent='Consultar'; prog.classList.add('hide'); $('progTxt').textContent='';
+  ['btnXlsx','btnCsv','btnJson'].forEach(i=>$(i).classList.remove('hide'));
+  if(modo==='um') render(resultados[0]); else renderResumo(plano, mapa);
+  const falhas = resultados.filter(m=>!m.fontes.open && !m.fontes.cnpja).length;
+  if (falhas && falhas===resultados.length){
+    const rede = resultados.some(m=>m.status.open==='o navegador bloqueou ou a internet falhou');
+    aviso('err', rede ? 'Não consegui acessar nenhuma das fontes. Verifique a internet. Se persistir, o navegador pode estar bloqueando o acesso direto; avise quem lhe enviou esta ferramenta.' : 'Nenhuma fonte retornou dados.');
+  } else if (falhas) aviso('warn', `${falhas} CNPJ${falhas===1?'':'s'} não ${falhas===1?'foi encontrado':'foram encontrados'}; a coluna Observação da planilha explica.`);
+};
+
+function dd(m,k){ const c=m.campos[k]; if(!c||c.valor==='') return '';
+  const v = k==='capital_social'?moeda(c.valor):(['data_situacao','abertura','data_opcao_simples'].includes(k)?esc(dataBr(c.valor)):(k==='cep'?esc(cepBr(c.valor)):esc(c.valor)));
+  const tag = c.diverge?`<span class="div-tag" title="OpenCNPJ: ${esc(c.a)} | CNPJá: ${esc(c.b)}">fontes divergem</span>`:'';
+  return `<div><dt>${esc(c.rotulo)}</dt><dd>${v}${tag}</dd></div>`; }
+function cepBr(s){ const d=soDigitos(s); return d.length===8?d.replace(/(\d{5})(\d{3})/,'$1-$2'):s; }
+function dfree(rot,val){ return val?`<div><dt>${esc(rot)}</dt><dd>${val}</dd></div>`:''; }
+function kpi(k,v){ return v?`<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`:''; }
+function dataBr(s){ const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||''); return m?`${m[3]}/${m[2]}/${m[1]}`:(s||''); }
+function anos(s){ const d=new Date(s); if(isNaN(d)) return ''; const a=Math.floor((Date.now()-d)/31557600000); return a>=1?`${a} ${a===1?'ano':'anos'}`:'menos de 1 ano'; }
+
+function render(m){
+  const c = k=>m.campos[k].valor;
+  const sit=(c('situacao')||'').toUpperCase();
+  const stCls = sit.startsWith('ATIV')?'ok':(sit?'bad':'');
+  const ramo=c('cnae_principal.descricao');
+  const end=[c('logradouro'),c('numero'),c('complemento')].filter(Boolean).join(', ');
+  const cidade=[c('municipio'),c('uf')].filter(Boolean).join(' / ');
+  const fonteChip=(n,s)=>`<span class="chip ${s==='ok'?'ok':'bad'}">${n}: ${s==='ok'?'ok':esc(s)}</span>`;
+  let h=`<div class="card ident"><h3>${esc(c('razao_social')||'Dados não encontrados')}</h3>
+    <div class="small">${esc(formatCnpj(m.cnpj))}${c('nome_fantasia')?` &middot; ${esc(c('nome_fantasia'))}`:''}</div>
+    <div class="chips">${sit?`<span class="chip ${stCls}">${esc(c('situacao'))}</span>`:''}${c('tipo')?`<span class="chip">${esc(c('tipo'))}</span>`:''}${c('simples')==='Sim'?'<span class="chip">Simples Nacional</span>':''}${c('mei')==='Sim'?'<span class="chip">MEI</span>':''}</div>
+    ${ramo?`<div class="ramo"><div class="t">Ramo de atuação</div><div class="v">${esc(ramo)}</div><div class="small">CNAE ${esc(c('cnae_principal.codigo'))}</div></div>`:''}
+    <div class="src">${fonteChip('OpenCNPJ',m.status.open)}${fonteChip('CNPJá',m.status.cnpja)}</div></div>`;
+  h+=`<div class="kpis">${kpi('Aberta em',c('abertura')?`${dataBr(c('abertura'))} · ${anos(c('abertura'))}`:'')}${kpi('Porte',c('porte'))}${kpi('Capital social',c('capital_social')===''?'':moeda(c('capital_social')))}${kpi('Localização',cidade)}</div>`;
+
+  if(m.divergencias.length){
+    h+=`<div class="card"><h2>Divergências entre as fontes (${m.divergencias.length})</h2>${m.divergencias.map(d=>`<div class="diff"><b>${esc(d.campo)}</b><div class="cols"><div><small>OpenCNPJ</small>${esc(d.open)}</div><div><small>CNPJá</small>${esc(d.cnpja)}</div></div></div>`).join('')}
+    <p class="small" style="margin:12px 0 0">As duas usam a mesma base mensal da Receita; diferenças costumam ser de momento de atualização. Concordar não prova que está correto, mas divergir merece conferência.</p></div>`;
+  } else if(m.fontes.open&&m.fontes.cnpja){ h+=`<div class="msg ok" style="margin-top:0;margin-bottom:16px">As duas fontes concordam em todos os campos comparados.</div>`; }
+  else { h+=`<div class="msg warn" style="margin-top:0;margin-bottom:16px">Só uma fonte respondeu, então não foi possível comparar.</div>`; }
+
+  h+=`<div class="card"><h2>Dados cadastrais</h2><dl>${['razao_social','nome_fantasia','situacao','data_situacao','motivo_situacao','abertura','natureza_juridica','porte','simples','data_opcao_simples','mei','ente_federativo','situacao_especial'].map(k=>dd(m,k)).join('')}</dl>
+    <div class="sub-h">Endereço</div><dl>${dfree('Logradouro',esc(end))}${['bairro','cep','municipio','uf'].map(k=>dd(m,k)).join('')}</dl>
+    <div class="sub-h">Contato</div><dl>${dfree('E-mails',esc(m.emails.join(', ')))}${dfree('Telefones',esc(m.telefones.join(' · ')))}${(!m.emails.length&&!m.telefones.length)?'<div class="small">Sem contatos públicos.</div>':''}</dl></div>`;
+
+  h+=`<div class="card"><h2>Atividades econômicas (CNAE)</h2>
+    ${ramo?`<div class="cnae"><span class="code main">${esc(c('cnae_principal.codigo'))}</span><span><b>${esc(ramo)}</b> <span class="small">principal</span></span></div>`:''}
+    ${m.cnaes_secundarios.map(x=>`<div class="cnae"><span class="code">${esc(x.codigo)}</span><span>${esc(x.descricao)}</span></div>`).join('')||'<div class="small">Sem atividades secundárias.</div>'}</div>`;
+
+  if(m.socios.length) h+=`<div class="card"><h2>Sócios e administradores (${m.socios.length})</h2><div class="socios">${m.socios.map(s=>`<div class="socio"><b>${esc(s.nome)}</b><span>${esc(s.qualificacao||'')}${s.entrada?` · desde ${esc(dataBr(s.entrada))}`:''}</span><span>${esc(s.tipo||'')} ${esc(s.documento||'')}${s.faixa_etaria?` · ${esc(s.faixa_etaria)}`:''}</span></div>`).join('')}</div></div>`;
+
+  h+=`<div class="card"><div class="small">Dados atualizados em — OpenCNPJ: ${esc(m.atualizado.open?dataBr(m.atualizado.open):'—')} · CNPJá: ${esc(m.atualizado.cnpja?dataBr(m.atualizado.cnpja):'—')}</div>
+    <details><summary>Ver resposta bruta das fontes</summary><pre>${esc(JSON.stringify(m.bruto,null,2).slice(0,60000))}</pre></details></div>`;
+  $('resultado').innerHTML=h;
+}
+function renderResumo(plano, mapa){
+  const unicos=[...mapa.values()], ok=unicos.filter(m=>m.fontes.open||m.fontes.cnpja), ativas=ok.filter(m=>(m.campos.situacao.valor||'').toUpperCase().startsWith('ATIV')).length;
+  const div=unicos.filter(m=>m.divergencias.length).length;
+  const contagem=(f)=>{ const c={}; ok.forEach(m=>{ const k=f(m)||'(não informado)'; c[k]=(c[k]||0)+1; }); return Object.entries(c).sort((a,b)=>b[1]-a[1]); };
+  const top=(arr,n)=>arr.slice(0,n).map(([k,v])=>`<div class="cnae"><span class="code">${v}</span><span>${esc(k)}</span></div>`).join('')||'<div class="small">—</div>';
+  const linhas=plano.linhas.slice(0,300);
+  let h=`<div class="kpis">${kpi('CNPJs consultados',String(unicos.length))}${kpi('Encontrados',String(ok.length))}${kpi('Ativos',String(ativas))}${kpi('Com divergência',$('conferir').checked?String(div):'—')}</div>
+  <div class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px"><div><h2>Por tamanho (porte)</h2>${top(contagem(m=>m.campos.porte.valor+(m.campos.mei.valor==='Sim'?' (MEI)':'')),6)}</div><div><h2>Por setor</h2>${top(contagem(m=>setorCnae(m.campos['cnae_principal.codigo'].valor)),6)}</div></div>
+  <div class="card"><h2>Prévia da planilha (${plano.linhas.length} linha${plano.linhas.length===1?'':'s'})</h2><div class="scroll"><table class="res"><tr><th>CNPJ</th><th>Empresa</th><th>Situação</th><th>Tamanho</th><th>Área de atuação</th><th>Cidade/UF</th></tr>
+  ${linhas.map(l=>{ const m=l.cnpj?mapa.get(l.cnpj):null; if(!m) return `<tr><td>${esc(l.cnpj?formatCnpj(l.cnpj):(l.celulas[0]||''))}</td><td colspan="5" class="small">${l.cnpj?'Não consultado':'Sem CNPJ válido'}</td></tr>`;
+    const c=k=>m.campos[k].valor, s=c('situacao')||'';
+    if(!m.fontes.open&&!m.fontes.cnpja) return `<tr><td>${esc(formatCnpj(l.cnpj))}</td><td colspan="5" class="small">Não encontrado</td></tr>`;
+    return `<tr><td>${esc(formatCnpj(l.cnpj))}</td><td>${esc(c('razao_social'))}</td><td>${s?`<span class="chip ${s.toUpperCase().startsWith('ATIV')?'ok':'bad'}">${esc(s)}</span>`:''}</td><td>${esc(c('porte'))}${c('mei')==='Sim'?' (MEI)':''}</td><td>${esc(c('cnae_principal.descricao'))}</td><td>${esc([c('municipio'),c('uf')].filter(Boolean).join('/'))}</td></tr>`; }).join('')}</table></div>
+  ${plano.linhas.length>300?`<p class="small">Mostrando as primeiras 300 linhas; a planilha traz todas.</p>`:''}
+  <p class="small">A planilha mantém as suas colunas originais e acrescenta: razão social, situação, tamanho, setor, área de atuação, localização, capital e observações. A segunda aba traz todos os dados.</p></div>`;
+  $('resultado').innerHTML=h;
+}
+
+function baixar(nome, conteudo, tipo){
+  const blob = new Blob([conteudo], {type:tipo}), a=document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+const dataHoje = ()=>new Date().toISOString().slice(0,10);
+$('btnCsv').onclick = ()=>baixar(`consulta-cnpj-${dataHoje()}.csv`, geraCsv(resultados), 'text/csv;charset=utf-8');
+$('btnJson').onclick = ()=>baixar(`consulta-cnpj-${dataHoje()}.json`, JSON.stringify(resultados,null,2), 'application/json');
+$('btnXlsx').onclick = ()=>{
+  const base=(planoAtual&&planoAtual.nome?planoAtual.nome.replace(/\.[^.]+$/,'')+'-':'')+'consulta-cnpj-'+dataHoje()+'.xlsx';
+  baixar(base, geraXlsx(montaAbasSaida(planoAtual, mapaAtual)), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+};
+</script>
+</body>
+</html>
